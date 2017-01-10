@@ -1,0 +1,9 @@
+# Dependency directory
+node_modules
+
+# IDE
+.idea
+.vscode
+
+# Config file
+config.json
