@@ -22,7 +22,14 @@ Run the app.
 npm start
 ```
 
-The app will be served at `localhost:3000`.
+The app will be served at `localhost:3001`.
+
+## Documentations
+
+[Bitly API](http://dev.bitly.com/get_started.html)
+
+[flux-architecture](https://scotch.io/tutorials/getting-to-know-flux-the-react-js-architecture)
+
 
 ## License
 

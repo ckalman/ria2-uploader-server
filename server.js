@@ -5,14 +5,15 @@ const app = express();
 const jwt = require('express-jwt');
 const cors = require('cors');
 const routeValidator = require('express-route-validator');
+const bodyParser = require('body-parser')
 let api = express.Router();
 let bitly = require('./api/Bitly');
 
 
 app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 app.use('/api/v1', api);
-
-
 
 // Authentication middleware provided by express-jwt.
 // This middleware will check incoming requests for a valid
@@ -24,6 +25,7 @@ const authCheck = jwt({
 
 
 app.get('/test', (req, res, next) => {
+
     res.send('Uploader web service running');
 });
 
@@ -34,22 +36,33 @@ api.get('/bitly/info/:id', authCheck, routeValidator.validate({
     res.end();
 });
 
-api.get('/bitly/info/:id/click', authCheck, (req, res) =>{
+api.get('/bitly/info/:id/click', authCheck, (req, res) => {
 
 });
 
 api.post('/bitly/shorten', authCheck, (req, res) => {
-    bitly.shorten("http://google.ch").then((result) =>{
+    console.log(req.body.long_url);
+    /*bitly.shorten("http://google.ch").then((result) => {
         res.json(result);
-    }).catch((e) =>{
+    }).catch((e) => {
         return next(e);
-    });
+    });*/
 });
 
-app.use(function(err, req, res, next) {
-  // Do logging and user-friendly error message display
-  console.error(err);
-  res.status(500).send({status:500, message: 'internal error', type:'internal'}); 
+api.param('id', function (req, res, next, id) {
+    var regex = /[0-9]?$/g
+    console.log(id.match(regex));
+  if(!isNaN(parseFloat(id)) && isFinite(id)){
+      next();
+    }else{
+        return next({status: 500, message: 'id must be integer'});
+    }
+});
+
+api.use(function (err, req, res, next) {
+    // Do logging and user-friendly error message display
+    console.error(err);
+    res.status(500).send({ status: 500, message: err.message, type: 'internal' });
 });
 
 app.listen(3001);
