@@ -1,6 +1,5 @@
 let request = require('request');
 const querystring = require('querystring');
-
 const config = require('../config.json');
 
 var Bitly = function () {
@@ -16,33 +15,44 @@ var Bitly = function () {
 
     function shorten(longUrl) {
         let url = shortenUrlRequest(longUrl);
-        return request(url);
+        return req(url);
     }
 
     function info(bitlyUrl) {
         let url = infoUrlRequest(bitlyUrl);
-        return request(url);
+        return req(url);
     }
 
     function numberOfClick(bitlyUrl) {
         let url = numberOfClickUrl(bitlyUrl);
-        return request(url);
+        return req(url);
     }
 
     function countries(bitlyUrl) {
         let url = countriesUrl(bitlyUrl);
-        return request(url);
+        return req(url);
     }
 
-    function request(url) {
-        return new Promis((resolve, reject) => {
+    function req(url) {
+        return new Promise((resolve, reject) => {
             request(url, function (error, response, body) {
                 if (error) {
+                    console.log("my error : ", error);
+                    if(error.code == 'ENOTFOUND'){
+                        console.error("BITLY API : ", error);
+                        reject({message: "INTERNET CONNEXION ERROR"});
+                    }
                     reject(error);
                 }
-                resolve(response);
+                if(response != undefined){
+                    var body = JSON.parse(response.body);
+                    if(body.status_code == 500){
+                        reject({message: body.status_txt})
+                    }
+                    resolve(body);
+                }
             });
-        });
+        });        
     }
 
     function countriesUrl(bitlyUrl) {

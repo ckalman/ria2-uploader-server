@@ -8,6 +8,8 @@ const routeValidator = require('express-route-validator');
 const bodyParser = require('body-parser')
 let api = express.Router();
 let bitly = require('./api/Bitly');
+var URL = require('url-parse');
+
 
 
 app.use(cors());
@@ -25,7 +27,6 @@ const authCheck = jwt({
 
 
 app.get('/test', (req, res, next) => {
-
     res.send('Uploader web service running');
 });
 
@@ -40,18 +41,23 @@ api.get('/bitly/info/:id/click', authCheck, (req, res) => {
 
 });
 
-api.post('/bitly/shorten', authCheck, (req, res) => {
-    console.log(req.body.long_url);
-    /*bitly.shorten("http://google.ch").then((result) => {
-        res.json(result);
+api.post('/bitly/shorten', authCheck, (req, res, next) => {
+    let inputUrl = req.body.long_url;
+    
+    // Add protocol to the url  
+    let url2 = new URL(inputUrl, true);
+    if(!url2.protocol){
+        url2.set("protocol", "http:");
+    }
+
+    bitly.shorten(url2.toString()).then((result) => {
+        res.json(result.data);
     }).catch((e) => {
-        return next(e);
-    });*/
+        return next({message: e.message});
+    });
 });
 
 api.param('id', function (req, res, next, id) {
-    var regex = /[0-9]?$/g
-    console.log(id.match(regex));
   if(!isNaN(parseFloat(id)) && isFinite(id)){
       next();
     }else{
@@ -61,8 +67,7 @@ api.param('id', function (req, res, next, id) {
 
 api.use(function (err, req, res, next) {
     // Do logging and user-friendly error message display
-    console.error(err);
-    res.status(500).send({ status: 500, message: err.message, type: 'internal' });
+    res.status(500).json({ status: 500, message: err.message, type: 'internal' });
 });
 
 app.listen(3001);
