@@ -1,4 +1,4 @@
-// server.js
+// TODO: REFACTOR CRAP SINGLE FILE !
 const config = require('./config.json');
 const express = require('express');
 const app = express();
@@ -7,8 +7,20 @@ const cors = require('cors');
 const routeValidator = require('express-route-validator');
 const bodyParser = require('body-parser')
 let api = express.Router();
+var multer  = require('multer')
+
 let bitly = require('./api/Bitly');
+let uploader = require('./api/Uploader');
 var URL = require('url-parse');
+
+
+const limits = {
+    fieldNameSize: 50,
+    fileSize: 5000000
+}
+
+var upload = multer({ dest: 'uploads/', limits: limits})
+
 
 
 
@@ -56,6 +68,16 @@ api.post('/bitly/shorten', authCheck, (req, res, next) => {
         return next({message: e.message});
     });
 });
+
+
+// UPLOAD
+
+
+api.post('/upload/file', upload.single('file', limits), function(req, res, next){
+    console.log("body : ", req.file);    
+    res.json(req.file);
+});
+
 
 api.param('id', function (req, res, next, id) {
   if(!isNaN(parseFloat(id)) && isFinite(id)){

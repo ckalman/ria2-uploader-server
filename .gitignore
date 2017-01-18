@@ -7,3 +7,5 @@ node_modules
 
 # Config file
 config.json
+
+uploads/

@@ -7,5 +7,10 @@
     "API_URL": "https://api-ssl.bitly.com/v3/",
     "API_TOKEN": "",
     "OAUTH_TOKEN": ""
+  },
+  "UPLOAD":{
+    "API_URL": "https://api.uploadcare.com",
+    "PUBLIC_KEY":"...",
+    "SECRET_KEY":"..."
   }
 }
