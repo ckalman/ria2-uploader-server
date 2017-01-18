@@ -12,6 +12,7 @@ var multer  = require('multer')
 let bitly = require('./api/Bitly');
 let uploader = require('./api/Uploader');
 var URL = require('url-parse');
+var User = require('./models/User');
 
 
 const limits = {
@@ -20,9 +21,6 @@ const limits = {
 }
 
 var upload = multer({ dest: 'uploads/', limits: limits})
-
-
-
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -45,7 +43,7 @@ app.get('/test', (req, res, next) => {
 api.get('/bitly/info/:id', authCheck, routeValidator.validate({
 
 }), (req, res) => {
-    console.log(req.params.id);
+    console.log(req.user.sub);
     res.end();
 });
 
