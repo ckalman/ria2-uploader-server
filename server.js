@@ -7,7 +7,7 @@ const cors = require('cors');
 const routeValidator = require('express-route-validator');
 const bodyParser = require('body-parser')
 let api = express.Router();
-var multer  = require('multer')
+var multer = require('multer')
 
 let bitly = require('./api/Bitly');
 let uploader = require('./api/Uploader');
@@ -20,11 +20,11 @@ const limits = {
     fileSize: 5000000
 }
 
-var upload = multer({ dest: 'uploads/', limits: limits})
+var upload = multer({ dest: 'uploads/', limits: limits })
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/v1', api);
 
 // Authentication middleware provided by express-jwt.
@@ -40,50 +40,76 @@ app.get('/test', (req, res, next) => {
     res.send('Uploader web service running');
 });
 
-api.get('/bitly/info/:id', authCheck, routeValidator.validate({
-
-}), (req, res) => {
-    console.log(req.user.sub);
-    res.end();
-});
-
-api.get('/bitly/info/:id/click', authCheck, (req, res) => {
-
-});
-
-api.post('/bitly/shorten', authCheck, (req, res, next) => {
-    let inputUrl = req.body.long_url;
-    
-    // Add protocol to the url  
-    let url2 = new URL(inputUrl, true);
-    if(!url2.protocol){
-        url2.set("protocol", "http:");
-    }
-
-    bitly.shorten(url2.toString()).then((result) => {
-        res.json(result.data);
-    }).catch((e) => {
-        return next({message: e.message});
+api.get('/bitly', authCheck, (req, res, next) => {
+    let userId = req.user.sub;
+    User.findById(userId).then((user) => {
+        res.json(user.get('links'));
+    }).catch((err) => {
+        return next({ message: 'database error :(' });
     });
 });
 
+// Query params : url => bily url.
+api.get('/bitly/info', authCheck, (req, res, next) => {
+    let bitlyUrl = req.query.url;
+    let result = null;
 
-// UPLOAD
+    if (bitlyUrl) {
+        bitly.numberOfClick(bitlyUrl).then((numberOfClickResult) => {
+            var numberOfClick = numberOfClickResult.data;
+            result = numberOfClick;
+            if (numberOfClick) {
+                bitly.countries(bitlyUrl).then((resCountries) => {
+                    result.countries = resCountries.data.countries;
+                    res.json(result);
+                }).catch((e) => {
+                    return next({ message: 'Invalid bilty link' });
+                })
+
+            } else {
+                return next({ message: 'Invalid bilty link' });
+            }
+        }).catch((e) => {
+            return next({ message: e.message });
+        });
+    } else {
+        return next({ message: 'Invalid url params !!!' });
+    }
+});
 
 
-api.post('/upload/file', upload.single('file', limits), function(req, res, next){
-    console.log("body : ", req.file);    
+api.post('/bitly/shorten', authCheck, (req, res, next) => {
+    let inputUrl = req.body.long_url;
+    let userId = req.user.sub;
+
+    // Add protocol to the url  
+    let url = new URL(inputUrl, true);
+    if (!url.protocol) {
+        url.set("protocol", "http:");
+    }
+
+    User.findById(userId).then((user) => {
+        bitly.shorten(url.toString()).then((result) => {
+            user.addLink(result.data);
+            user.save().then(() => {
+                res.json(result.data);
+            }).catch((err) => {
+                return next({ message: 'Database insert error :(' });
+            });
+        }).catch((e) => {
+            return next({ message: e.message });
+        });
+    }).catch((err) => {
+        console.error(err);
+    });
+});
+
+api.post('/upload', upload.single('file', limits), function (req, res, next) {
+    // TODO: upload file => bilty file => save db => send response.
+    console.log("body : ", req.file);
     res.json(req.file);
 });
 
-
-api.param('id', function (req, res, next, id) {
-  if(!isNaN(parseFloat(id)) && isFinite(id)){
-      next();
-    }else{
-        return next({status: 500, message: 'id must be integer'});
-    }
-});
 
 api.use(function (err, req, res, next) {
     // Do logging and user-friendly error message display

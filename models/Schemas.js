@@ -2,8 +2,8 @@ Schemas = {
     user: {
         id: null,
         name: null,
-        links: null,
-        uploads: null
+        links: [],
+        uploads: [],
        }
 }
 

@@ -60,7 +60,7 @@ var Bitly = function () {
             access_token: ACCESS_TOKEN,
             link: bitlyUrl
         });
-        return api + '/countries?' + params;
+        return api + '/link/countries?' + params;
     }
 
     function numberOfClickUrl(bitlyUrl) {
@@ -68,13 +68,13 @@ var Bitly = function () {
             access_token: ACCESS_TOKEN,
             link: bitlyUrl
         });
-        return api + '/clicks?' + params;
+        return api + '/link/clicks?' + params;
     }
 
     function infoUrlRequest(bitlyUrl) {
         let params = querystring.stringify({
             access_token: ACCESS_TOKEN,
-            link: bitlyUrl
+            shortUrl: bitlyUrl
         });
         return api + '/info?' + params;
     }
