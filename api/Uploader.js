@@ -11,13 +11,14 @@ var Uploader = function () {
         info,
     }
 
-    function upload(fileName, name) {
+    function upload(filePath, originalName) {
         return new Promise(function (resolve, reject) {
-            uploadcare.file.upload(fs.createReadStream(filePath), { filename: name }, function (err, res) {
+            uploadcare.file.upload(fs.createReadStream(filePath), { filename: originalName }, function (err, res) {
                 if (res) {
-                    reslove(res.file);
+                    resolve(res.file);
                 } else {
-                    reject(err);
+                    console.error("Error : ", err);
+                    reject({message: 'Invalid upload file'});
                 }
             });
         });

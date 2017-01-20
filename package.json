@@ -16,6 +16,7 @@
     "express-jwt": "^5.1.0",
     "express-route-validator": "^0.2.5",
     "lodash": "^4.17.4",
+    "mmmagic": "^0.4.5",
     "multer": "^1.2.1",
     "node-localdb": "0.0.3",
     "request": "^2.79.0",

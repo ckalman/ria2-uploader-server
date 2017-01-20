@@ -30,6 +30,7 @@ User.prototype.addLink = function(link){
 
 User.prototype.addUpload = function(upload){
     this.data['uploads'].push(upload);
+    this.data['uploads'] = _.uniq(this.data['uploads'], 'url');
 }
 
 User.findById = function (id) {

@@ -12,5 +12,8 @@
     "API_URL": "https://api.uploadcare.com",
     "PUBLIC_KEY":"...",
     "SECRET_KEY":"..."
+  },
+  "SETTINGS":{
+    "FILE_VALIDATION_REG": "^image\/.*$"
   }
 }

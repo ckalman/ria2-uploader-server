@@ -11,9 +11,9 @@ var multer = require('multer')
 
 let bitly = require('./api/Bitly');
 let uploader = require('./api/Uploader');
+var FileValidator = require('./utils/FileValidator');
 var URL = require('url-parse');
 var User = require('./models/User');
-
 
 const limits = {
     fieldNameSize: 50,
@@ -104,17 +104,61 @@ api.post('/bitly/shorten', authCheck, (req, res, next) => {
     });
 });
 
-api.post('/upload', upload.single('file', limits), function (req, res, next) {
-    // TODO: upload file => bilty file => save db => send response.
-    console.log("body : ", req.file);
-    res.json(req.file);
+
+api.post('/upload', authCheck, upload.single('file', limits), function (req, res, next) {
+    // File name
+    let originalName = req.file.originalname;
+    // Unique user id
+    let userId = req.user.sub;
+    // Path file name
+    let tempFileName = req.file.filename;
+    let filePath = `${__dirname}/uploads/${tempFileName}`;
+
+    // TODO: refactor !
+    FileValidator.check(filePath).then((ok) => {
+        User.findById(userId).then((user) => {
+            uploader.upload(filePath, originalName).then((fileId) => {
+                uploader.info(fileId).then((fileInfo) => {
+                    // CALL BITLY API :
+                    if (!fileInfo.original_file_url) {
+                        return next({ message: 'Upload failed please retry' });
+                    }
+                    bitly.shorten(fileInfo.original_file_url).then((result) => {
+                        result.data.info = fileInfo;
+                        user.addUpload(result.data);
+                        user.save().then(() => {
+                            res.json(result.data);
+                        }).catch((err) => {
+                            return next({ message: 'Database user upload insert error :(' });
+                        });
+                    }).catch((e) => {
+                        return next({ message: e.message });
+                    });
+                }).catch((e) => {
+                    console.error(e);
+                    return next({ message: e.message });
+                });
+            }).catch((e) => {
+                console.error(e);
+                return next({ message: e.message });
+            });
+        }).catch((e) => {
+            console.error(e);
+        });
+    }).catch((e) => {
+        console.error("error: ", e);
+        return next({ message: e.message });
+    });
 });
+
 
 
 api.use(function (err, req, res, next) {
     // Do logging and user-friendly error message display
     res.status(500).json({ status: 500, message: err.message, type: 'internal' });
 });
+
+
 
 app.listen(3001);
 console.log('Listening on http://localhost:3001');
