@@ -42,10 +42,11 @@ app.get('/test', (req, res, next) => {
 
 api.get('/bitly', authCheck, (req, res, next) => {
     let userId = req.user.sub;
-    User.findById(userId).then((user) => {
-        res.json(user.get('links'));
-    }).catch((err) => {
-        return next({ message: 'database error :(' });
+    User.findById(userId).then((u) => {
+        res.json(u.get('links'));
+    }).catch(e => {
+        console.error(e);
+        return next({message: 'read database error.'});
     });
 });
 
@@ -104,8 +105,19 @@ api.post('/bitly/shorten', authCheck, (req, res, next) => {
     });
 });
 
+api.get('/uploads', authCheck, function (req, res, next) {
+    let userId = req.user.sub;
+    User.findById(userId).then((u) => {
+        console.log("user data : ", u.get('uploads'));
+        res.json(u.get('uploads'));
+    }).catch(e => {
+        console.error(e);
+        return next({message: 'read database error.'});
+    });
+});
 
-api.post('/upload', authCheck, upload.single('file', limits), function (req, res, next) {
+
+api.post('/uploads', authCheck, upload.single('file', limits), function (req, res, next) {
     // File name
     let originalName = req.file.originalname;
     // Unique user id
@@ -116,26 +128,24 @@ api.post('/upload', authCheck, upload.single('file', limits), function (req, res
 
     // TODO: refactor !
     FileValidator.check(filePath).then((ok) => {
-        User.findById(userId).then((user) => {
-            uploader.upload(filePath, originalName).then((fileId) => {
-                uploader.info(fileId).then((fileInfo) => {
-                    // CALL BITLY API :
-                    if (!fileInfo.original_file_url) {
-                        return next({ message: 'Upload failed please retry' });
-                    }
-                    bitly.shorten(fileInfo.original_file_url).then((result) => {
-                        result.data.info = fileInfo;
+
+        uploader.upload(filePath, originalName).then((fileId) => {
+            uploader.info(fileId, originalName).then((fileInfo) => {
+                // CALL BITLY API :
+                if (!fileInfo.original_file_url) {
+                    console.error("Upload faild because the api doesn't send back info for the file id : " + fileId);
+                    return next({ message: 'Upload failed please wait 5 sec and then retry. (API BUG) If the problem persist please contact the developer.' });
+                }
+                bitly.shorten(fileInfo.original_file_url).then((result) => {
+                    result.data.info = fileInfo;
+                    User.findById(userId).then((user) => {
                         user.addUpload(result.data);
-                        user.save().then(() => {
-                            res.json(result.data);
-                        }).catch((err) => {
-                            return next({ message: 'Database user upload insert error :(' });
-                        });
+                        user.save();
                     }).catch((e) => {
-                        return next({ message: e.message });
+                        console.error(e);
                     });
+                    res.json(result.data);
                 }).catch((e) => {
-                    console.error(e);
                     return next({ message: e.message });
                 });
             }).catch((e) => {
@@ -144,10 +154,35 @@ api.post('/upload', authCheck, upload.single('file', limits), function (req, res
             });
         }).catch((e) => {
             console.error(e);
+            return next({ message: e.message });
         });
+
     }).catch((e) => {
         console.error("error: ", e);
         return next({ message: e.message });
+    });
+});
+
+api.delete('/uploads/:uuid', authCheck, function(req, res, next){
+    let uuid = req.params.uuid
+    let userId = req.user.sub;
+    User.findById(userId).then(function(user){
+        let uploads = user.findUpload(uuid);
+        if(uploads){
+            // Remove from the database :
+            let data = user.removeUpload(uploads);
+            uploader.remove(uuid).then((result) => {
+                user.save();
+                res.json(data);
+            }).catch((e) => {
+                console.error("Remove file error : ", e);
+                return next({message: e.message});
+            });
+        }else{
+            return next({message: 'Upload id not found !'});
+        }
+    }).catch((e) =>{
+        return next({message: 'Database error user not found'});
     });
 });
 

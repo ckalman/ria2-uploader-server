@@ -23,21 +23,36 @@ User.prototype.set = function (name, value) {
     this.data[name] = value;
 }
 
-User.prototype.addLink = function(link){
+User.prototype.addLink = function (link) {
+    console.log("push link : ", link);
     this.data['links'].push(link);
-    this.data['links'] = _.uniq(this.data['links'], 'url');
+    this.data['links'] = _.uniqBy(this.data['links'], 'hash');
 }
 
-User.prototype.addUpload = function(upload){
+User.prototype.addUpload = function (upload) {
     this.data['uploads'].push(upload);
-    this.data['uploads'] = _.uniq(this.data['uploads'], 'url');
 }
+
+/**
+ * uuid = upload id
+ */
+User.prototype.findUpload = function (uuid) {
+    return _.find(this.data['uploads'], { info: { uuid: uuid } });
+}
+
+User.prototype.removeUpload = function (links) {
+    this.data['uploads'] = _.remove(this.data['uploads'], (n) => {
+        return n != links
+    });
+    return this.data['uploads'];
+}
+
 
 User.findById = function (id) {
     return new Promise(function (resolve, reject) {
-        user.findOne({ id }).then(function (u) {
+        user.findOne({ userPK: id }).then(function (u) {
             var userObj = new User(u);
-            userObj.set('id', id);
+            userObj.set('userPK', id);
             resolve(userObj);
         });
     });
@@ -45,10 +60,10 @@ User.findById = function (id) {
 
 User.prototype.save = function () {
     var self = this;
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
         this.data = self.sanitize(this.data);
         user.remove({ id: this.data['id'] }).then(function (u) {
-            user.insert(self.data).then(function (u) { 
+            user.insert(self.data).then(function (u) {
                 resolve(true);
             });
         });
