@@ -3,6 +3,11 @@ var db = require('node-localdb');
 var user = db(__dirname + '/../database/user.json');
 var _ = require("lodash");
 
+/**
+ * Represents a user. 
+ * It contains all bitly links 
+ * and all upload links.
+ */
 var User = function (data) {
     this.data = this.sanitize(data);
 }
@@ -47,7 +52,10 @@ User.prototype.removeUpload = function (links) {
     return this.data['uploads'];
 }
 
-
+/**
+ * Get user by id
+ * {id} Auth0 sub id.
+ */
 User.findById = function (id) {
     return new Promise(function (resolve, reject) {
         user.findOne({ userPK: id }).then(function (u) {

@@ -40,33 +40,43 @@ app.get('/test', (req, res, next) => {
     res.send('Uploader web service running');
 });
 
+/**
+ * Get all user shorten urls.
+ */
 api.get('/bitly', authCheck, (req, res, next) => {
     let userId = req.user.sub;
+    // Get user from the db.
     User.findById(userId).then((u) => {
         res.json(u.get('links'));
     }).catch(e => {
         console.error(e);
-        return next({message: 'read database error.'});
+        return next({ message: 'read database error.' });
     });
 });
 
-// Query params : url => bily url.
+/**
+ * Give info for a bitly url such as number of click, countries stats.
+ * params : url : Bitly url 
+ */
 api.get('/bitly/info', authCheck, (req, res, next) => {
     let bitlyUrl = req.query.url;
     let result = null;
 
     if (bitlyUrl) {
+        // Retrive the number of click.
         bitly.numberOfClick(bitlyUrl).then((numberOfClickResult) => {
             var numberOfClick = numberOfClickResult.data;
             result = numberOfClick;
             if (numberOfClick) {
+                // Retrive countries stats 
                 bitly.countries(bitlyUrl).then((resCountries) => {
+                    // Put countries stats and numberOfClick together.
                     result.countries = resCountries.data.countries;
+                    // Send back the result.
                     res.json(result);
                 }).catch((e) => {
                     return next({ message: 'Invalid bilty link' });
-                })
-
+                });
             } else {
                 return next({ message: 'Invalid bilty link' });
             }
@@ -78,7 +88,11 @@ api.get('/bitly/info', authCheck, (req, res, next) => {
     }
 });
 
-
+/**
+ * Shorten the url and give back the new bitly url.
+ * Body params:
+ *  - long_url : url to be shorten
+ */
 api.post('/bitly/shorten', authCheck, (req, res, next) => {
     let inputUrl = req.body.long_url;
     let userId = req.user.sub;
@@ -89,35 +103,49 @@ api.post('/bitly/shorten', authCheck, (req, res, next) => {
         url.set("protocol", "http:");
     }
 
-    User.findById(userId).then((user) => {
-        bitly.shorten(url.toString()).then((result) => {
+    // Shorten the url 
+    bitly.shorten(url.toString()).then((result) => {
+        // Add to the db.
+        User.findById(userId).then((user) => {
             user.addLink(result.data);
             user.save().then(() => {
-                res.json(result.data);
-            }).catch((err) => {
+
+            }).catch((e) => {
                 return next({ message: 'Database insert error :(' });
             });
         }).catch((e) => {
-            return next({ message: e.message });
+             return next({ message: 'database error' });
         });
-    }).catch((err) => {
-        console.error(err);
+        // send back the result
+        res.json(result.data);
+    }).catch((e) => {
+        console.error(e);
+        return next({ message: e.message });
     });
 });
 
-api.get('/uploads', authCheck, function (req, res, next) {
+/**
+ * Get all user uploads link. 
+ */
+api.get('/files', authCheck, function (req, res, next) {
     let userId = req.user.sub;
+    // Get all user upload link from the db.
     User.findById(userId).then((u) => {
-        console.log("user data : ", u.get('uploads'));
         res.json(u.get('uploads'));
     }).catch(e => {
         console.error(e);
-        return next({message: 'read database error.'});
+        return next({ message: 'read database error.' });
     });
 });
 
-
-api.post('/uploads', authCheck, upload.single('file', limits), function (req, res, next) {
+/**
+ * Upload and shortcut automaticaly the result. 
+ * Give back bitly link.
+ * Body params :
+ *  - file: File binary
+ * TODO: refactor
+ */
+api.post('/files', authCheck, upload.single('file', limits), function (req, res, next) {
     // File name
     let originalName = req.file.originalname;
     // Unique user id
@@ -126,26 +154,36 @@ api.post('/uploads', authCheck, upload.single('file', limits), function (req, re
     let tempFileName = req.file.filename;
     let filePath = `${__dirname}/uploads/${tempFileName}`;
 
-    // TODO: refactor !
+    // Check the type of the file.
     FileValidator.check(filePath).then((ok) => {
 
+        // Upload the file
         uploader.upload(filePath, originalName).then((fileId) => {
+
+            // Retrive info data of the uploaded file
             uploader.info(fileId, originalName).then((fileInfo) => {
-                // CALL BITLY API :
+
                 if (!fileInfo.original_file_url) {
                     console.error("Upload faild because the api doesn't send back info for the file id : " + fileId);
                     return next({ message: 'Upload failed please wait 5 sec and then retry. (API BUG) If the problem persist please contact the developer.' });
                 }
+
+                // Short the file url.
                 bitly.shorten(fileInfo.original_file_url).then((result) => {
                     result.data.info = fileInfo;
+
+                    // Add to the database
                     User.findById(userId).then((user) => {
                         user.addUpload(result.data);
                         user.save();
                     }).catch((e) => {
                         console.error(e);
                     });
+
+                    // Send result.
                     res.json(result.data);
                 }).catch((e) => {
+                    console.error(e);
                     return next({ message: e.message });
                 });
             }).catch((e) => {
@@ -163,12 +201,16 @@ api.post('/uploads', authCheck, upload.single('file', limits), function (req, re
     });
 });
 
-api.delete('/uploads/:uuid', authCheck, function(req, res, next){
+/**
+ * Remove the uploaded file
+ * {uuid} Uuid of the uploaded file (PK).
+ */
+api.delete('/files/:uuid', authCheck, function (req, res, next) {
     let uuid = req.params.uuid
     let userId = req.user.sub;
-    User.findById(userId).then(function(user){
+    User.findById(userId).then(function (user) {
         let uploads = user.findUpload(uuid);
-        if(uploads){
+        if (uploads) {
             // Remove from the database :
             let data = user.removeUpload(uploads);
             uploader.remove(uuid).then((result) => {
@@ -176,13 +218,13 @@ api.delete('/uploads/:uuid', authCheck, function(req, res, next){
                 res.json(data);
             }).catch((e) => {
                 console.error("Remove file error : ", e);
-                return next({message: e.message});
+                return next({ message: e.message });
             });
-        }else{
-            return next({message: 'Upload id not found !'});
+        } else {
+            return next({ message: 'Upload id not found !' });
         }
-    }).catch((e) =>{
-        return next({message: 'Database error user not found'});
+    }).catch((e) => {
+        return next({ message: 'Database error user not found' });
     });
 });
 

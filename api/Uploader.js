@@ -4,6 +4,7 @@ const config = require('../config.json');
 var uploadcare = require('../node_modules/uploadcare/lib/main')(config.UPLOAD.PUBLIC_KEY, config.UPLOAD.SECRET_KEY);
 var fs = require('fs');
 
+
 var Uploader = function () {
 
     return {
@@ -12,6 +13,11 @@ var Uploader = function () {
         remove
     }
 
+    /**
+     * Upload the file
+     * {originalName} Original file name, this will be show to the final user.
+     * {filePath} Physical file path
+     */
     function upload(filePath, originalName) {
         return new Promise(function (resolve, reject) {
             uploadcare.file.upload(fs.createReadStream(filePath), { filename: originalName }, function (err, res) {
@@ -25,6 +31,9 @@ var Uploader = function () {
         });
     }
 
+    /**
+     * Retrive some info like uuid (unique id), where the image / file are deployed, size ...
+     */
     function info(uuid, originalName) {
         return new Promise(function (resolve, reject) {
             uploadcare.files.info(uuid, function (err, res) {
@@ -49,7 +58,13 @@ var Uploader = function () {
             });
         });
     }
-
+    
+    /**
+     * Remove the image from the account
+     * BUG: L’image et bien supprimée de mon compte d’upload. 
+     * Cependant on peux toujours y accéder via le liens. 
+     * j’ignore si il s’agit d’un bug ou si cela nécessite du temps pour être réelement supprimé.
+     */
     function remove(uuid) {
         return new Promise(function (resolve, reject) {
             uploadcare.files.remove(uuid, function (err, res) {
