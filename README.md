@@ -28,22 +28,22 @@ The app will be served at `localhost:3001`.
 
 ### Introduction
 
-Ce projet à pour but de permettre à un utilisateur de minifier ces urls afin de pouvoir les partagers plus facilement. 
-De plus il permet aussi d'uploader un fichier, bien entendu le liens pour acceder au fichier uploader a été minifier.
+Ce projet a pour but de permettre à un utilisateur de minifier ces urls afin de pouvoir les partagers plus facilement. 
+De plus il permet aussi d'uploader des images, bien entendu le liens pour acceder aux images uploader ont été minifier.
 
 ### Choix des apis
 
 1.  Auth0: J'utilise cette api afin de pouvoir authentifier mon utilisateur. Grâce à cette api je n’ai pas besoins d’implémenter mon propres système d’authentifications. 
     De plus les utilisateurs peuvent s’authentifier avec leurs comptes (Google, Facebook …).
 
-2.  Uploadcare : Cette API  permet d’uploader des images / fichiers. 
-    Grâce à cette api je n’ai plus besoins de me soucier de la disponibilité du serveurs. 
-    Le web service peux être déployé en locale mais tous les fichiers déployer seront disponibles sur internet (puisque déployé par l’api).
+2.  Uploadcare : Cette API  permet d’uploader des images / (fichiers offre payante (ou inscription d'une CB)).
+    Grâce à cette api je n’ai plus besoins de me soucier de la disponibilité du serveurs (le web service). Les clients auront toujours accès à leurs images uploader.
+    De plus le web service peux être déployé en locale mais toutes les images déployées seront disponibles sur internet (puisque déployé par l’api).
 
-3.  Bitly : Cette api permet de réduire la taille des urls afin de facilité leurs mémorisations / partage. 
-    Par example : Il est plus facile de ce rappeler de cette url :  <http://bit.ly/2kfrmAB> que de celle-ci : <https://uploadcare.com/documentation/rest/>. 
-    Les raisons pour laquel j’ai choisi cette api c’est que lorsque j’upload un fichier avec Uploadcare l’url générée et très longues ce qui rend difficiles sont partage par orale. 
-    De ce fait lorsque l’utilisateur upload un fichier l’url généré et donnée à l’api Bitly afin de pouvoir ensuite la partager.
+3.  Bitly : Cette api permet de réduire la taille des urls afin de faciliter leurs mémorisations / partages. 
+    Par exemple : Il est plus facile de ce rappeler de cette url :  <http://bit.ly/2kfrmAB> que de celle-ci : <https://uploadcare.com/documentation/rest/>. 
+    Les raisons pour lequel j’ai choisi cette api c’est que lorsque j’upload une image avec Uploadcare l’url générée et très longues ce qui rend difficile sont partage par orale. 
+    De ce fait lorsque l’utilisateur upload une image l’url générée et donnée à l’api Bitly afin de pouvoir ensuite partager ce lien.
 
 ### Fonctionnement
 
@@ -55,7 +55,7 @@ Fonctionnement : Client - Web Service.
 2.  Le client peux ensuite effectuer ces appels au web services.
     -   Le web service vérifie le token
     -   Le web services effectue les appels aux différentes apis (Uploader, Bitly) et réponds aux requêtes du client
-3.  Le client recois ces infos.
+3.  Le client reçois ces infos.
 
 Pour résumer : Le client communique une seule fois à l’API auth0 afin de recevoir sont token. Une fois que le client possède le token il n’as plus besoins de communiquer avec l’api AUTH0. Toutes les autres communications ce font entre le client et le web service. (à l’exception du moment ou le token arrive a expiration) .
 
