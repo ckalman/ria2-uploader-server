@@ -88,7 +88,7 @@ Le web service RESTFull met à disposition ces routes :
 -   Interface utilisateur:
     -   Filtrer par extension (que des images) les fichiers uploader  (pour le moment aucun filter au niveau de la GUI).
     -   Redirection de l'utilisateur sur la page /home.
-    -   Lorsque le token expire : Il faut supprimer le token et inviter l'utilisateur a ce re-authentifier.
+    -   Lorsque le token expire : Il faut supprimer le token et inviter l'utilisateur a ce re-authentifier. 
 
 ### Liens
 
