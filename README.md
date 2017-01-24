@@ -71,6 +71,24 @@ Le web service RESTFull met à disposition ces routes :
 | POST   | /api/v1/files         | Permet d'uploader une image                                                                                          | Body params : - file : le fichier uploader |
 | DELETE | /api/v1/files/{uuid}  | Permet de supprimer une image                                                                                        | {uuid} : uuid du fichier (PK)              |
 
+### Gestion des erreurs
+
+-   Due au limitation de l'api les fichiers envoyé sont vérifié afin de déterminier si ce sont des images. (/utils/FileValidator).
+-   La limite en taille des fichiers et de 5MB
+
+### Bugs / Limitations
+
+-   Uploadcare:
+    -   Limite de la version gratuite : je ne peux uploader que des images.
+    -   Suppression : La suppression prend plusieurs heures (suppression de l’image uploader). >48H
+-   Bitly :
+
+    -   Les liens ne peuvent être supprimé du compte. (Uniquement avec la version gratuite).
+
+-   Interface utilisateur:
+    -   Filtrer par extension (que des images) les fichiers uploader  (pour le moment aucun filter au niveau de la GUI).
+    -   Redirection de l'utilisateur sur la page /home.
+    -   Lorsque le token expire : Il faut supprimer le token et inviter l'utilisateur a ce re-authentifier.
 
 ### Liens
 
