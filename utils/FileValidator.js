@@ -1,6 +1,5 @@
 
-var mmm = require('mmmagic'),
-    Magic = mmm.Magic;
+var mime = require('mime-magic');
 var config = require('../config.json');
 
 var FileValidator = function () {
@@ -9,22 +8,24 @@ var FileValidator = function () {
         check: check
     }
 
+    /**
+     * Check mime type
+     * {filePath} absolute file path
+     */
     function check(filePath) {
-        var magic = new Magic(mmm.MAGIC_MIME_TYPE);
-
         return new Promise((resolve, reject) => {
-            magic.detectFile(filePath, function (err, result) {
-                if (result) {
-                    if (result.match(new RegExp(config.SETTINGS.FILE_VALIDATION_REG, 'g'))){
+            mime(filePath, function (err, type) {
+                if (err) {
+                    console.error("ERROR : ", err.message);
+                    reject({ message: 'bad file type' });
+                } else {
+                    if (type.match(new RegExp(config.SETTINGS.FILE_VALIDATION_REG, 'g'))) {
                         resolve(true);
                     } else {
                         reject({ message: 'bad file type' });
-                    }                    
-                }else{
-                    reject({ message: 'bad file type' });
+                    }
                 }
             });
-
         });
     }
 }

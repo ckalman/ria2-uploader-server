@@ -75,12 +75,14 @@ api.get('/bitly/info', authCheck, (req, res, next) => {
                     // Send back the result.
                     res.json(result);
                 }).catch((e) => {
+                    console.error(e);
                     return next({ message: 'Invalid bilty link' });
                 });
             } else {
                 return next({ message: 'Invalid bilty link' });
             }
         }).catch((e) => {
+            console.error(e);
             return next({ message: e.message });
         });
     } else {
@@ -111,10 +113,12 @@ api.post('/bitly/shorten', authCheck, (req, res, next) => {
             user.save().then(() => {
 
             }).catch((e) => {
+                console.error(e);
                 return next({ message: 'Database insert error :(' });
             });
         }).catch((e) => {
-             return next({ message: 'database error' });
+            console.error(e);
+            return next({ message: 'database error' });
         });
         // send back the result
         res.json(result.data);
@@ -224,6 +228,7 @@ api.delete('/files/:uuid', authCheck, function (req, res, next) {
             return next({ message: 'Upload id not found !' });
         }
     }).catch((e) => {
+        console.error(e);
         return next({ message: 'Database error user not found' });
     });
 });

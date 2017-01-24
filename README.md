@@ -71,6 +71,7 @@ Le web service RESTFull met à disposition ces routes :
 | POST   | /api/v1/files         | Permet d'uploader une image                                                                                          | Body params : - file : le fichier uploader |
 | DELETE | /api/v1/files/{uuid}  | Permet de supprimer une image                                                                                        | {uuid} : uuid du fichier (PK)              |
 
+
 ### Liens
 
 [Bitly API](http://dev.bitly.com/get_started.html)
